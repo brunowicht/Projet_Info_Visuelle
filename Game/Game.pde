@@ -27,8 +27,8 @@ void draw() {
 
 void boxRotation() {
   if (mousePressed == true) {
-    rx = rx + speed*(map(pmouseY - mouseY, 0, width, 0, PI));
-    rz = rz - speed*(map(pmouseX - mouseX, 0, height, 0, PI));
+    rx = rx + speed*(map(pmouseY - mouseY, 0, width, 0, 2*PI));
+    rz = rz - speed*(map(pmouseX - mouseX, 0, height, 0, 2*PI));
   }
   rx = min(max(angle_min, rx),angle_max);
   rz = min(max(angle_min, rz),angle_max);
@@ -40,6 +40,6 @@ void mouseWheel(MouseEvent event) {
   speed = constrain(speed + 0.1 * event.getCount(), 0.2, 2);
 }
 
-float radToDeg(float angle) {
+float radToDeg(float angle){
   return angle * 180/PI;
 }
