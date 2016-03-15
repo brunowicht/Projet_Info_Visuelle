@@ -29,16 +29,20 @@ class Sphere {
     gravity.y -= gravityForce.y;
   }
   void checkEdges() {
-    if (location.x >= side/2 - radius) {
+    if (location.x > side/2 - radius) {
+      location.x = side/2 - radius;
       velocity.x = velocity.x * -0.9;
     }
-    if (location.y >= side/2 - radius) {
+    if (location.y > side/2 - radius) {
+      location.y = side/2 - radius;
       velocity.y = velocity.y * -0.9;
     }
-    if (location.x <= -side/2 + radius) {
+    if (location.x < -side/2 + radius) {
+      location.x = -side/2 + radius; 
       velocity.x = velocity.x * -0.9;
     }
-    if (location.y <= -side/2 + radius) {
+    if (location.y < -side/2 + radius) {
+      location.y = -side/2 + radius; 
       velocity.y = velocity.y * -0.9;
     }
   }
