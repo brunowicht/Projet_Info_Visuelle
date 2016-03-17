@@ -1,53 +1,69 @@
 class Sphere {
   PVector location;
   PVector velocity;
-  PVector  gravity;
   PVector gravityForce;
-  
-  float radius = 10;
+  PVector friction;
+  PVector acceleration;
 
-  Sphere() {
+  float radius;
+  float normalForce;
+  float frictionMagnitude;
+  float mu;
+
+  Sphere(int r) {
     location = new PVector(0, 0);
     velocity = new PVector(0, 0);
-    gravity = new PVector(0, 0);
     gravityForce = new PVector(0, 0);
+    mu = 0.01;
+    radius = r;
   }
 
   void update() {
-    velocity.add(gravity);
+    acceleration = gravityForce.get();
+    acceleration.add(friction);
+    velocity.add(acceleration);
     location.add(velocity);
   }
 
   void display() {
-    translate(location.x, - 1.5 * radius, location.y);
+    checkEdges();
+    friction();
+    gravity();
+    update();
+    translate(location.x, -(radius + high/2), location.y);
+    ambientLight(20, 20, 80);
     sphere(radius);
   }
 
   void gravity() {
-    gravityForce.x = - sin(rz) * gravityConstant;
-    gravityForce.y = sin(rx) * gravityConstant;
-    gravity.x -= gravityForce.x;
-    gravity.y -= gravityForce.y;
+    gravityForce.x = sin(rz) * gravityConstant;
+    gravityForce.y = -sin(rx) * gravityConstant;
   }
-  
-  void friction(){
+
+  void friction() {
+    normalForce = sqrt((pow(cos(rz), 2) + pow(cos(rx), 2))/2);
+    frictionMagnitude = normalForce * mu;
+    friction = velocity.get();
+    friction.mult(-1);
+    friction.normalize();
+    friction.mult(frictionMagnitude);
   }
   void checkEdges() {
     if (location.x > side/2) {
       location.x = side/2;
-      velocity.x = velocity.x * -0.9;
+      velocity.x = -velocity.x;
     }
     if (location.y > side/2) {
       location.y = side/2;
-      velocity.y = velocity.y * -0.9;
+      velocity.y = -velocity.y;
     }
     if (location.x < -side/2) {
       location.x = -side/2; 
-      velocity.x = velocity.x * -0.9;
+      velocity.x = -velocity.x;
     }
     if (location.y < -side/2) {
       location.y = -side/2; 
-      velocity.y = velocity.y * -0.9;
+      velocity.y = -velocity.y;
     }
   }
 }

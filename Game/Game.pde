@@ -1,34 +1,32 @@
-float depth = 500;
-float side = 200;
-float high = 10;
+float depth = 800;
+float side = 500;
+float high = 20;
 float angle_max = PI/3;
 float angle_min = - angle_max;
 float speed = 1.0;
 float rx = 0.0;
 float rz = 0.0;
-float gravityConstant = 0.001;
+float gravityConstant = 0.02;
 Sphere sphere;
 
 void settings() {
   size(800, 800, P3D);
 }
 void setup() {
-  sphere = new Sphere();
+  sphere = new Sphere(15);
   noStroke();
 }
 void draw() {
   camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
   directionalLight(50, 100, 125, 0, -1, 0);
   ambientLight(102, 102, 102);
-  background(200);
+  background(255);
   text("Rotation X: "+radToDeg(rx)+"   Rotation Z: "+radToDeg(rz)+"   speed : "+speed, 10+ width/6, height/5.5);
   translate(width/2, height/2, 0);
   boxRotation();
   box(side, high, side);
-  sphere.update();
-  sphere.checkEdges();
-  sphere.gravity();
   sphere.display();
+ 
 }
 
 void boxRotation() {
