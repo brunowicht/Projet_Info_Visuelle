@@ -14,7 +14,7 @@ class Sphere {
     location = new PVector(0, 0);
     velocity = new PVector(0, 0);
     gravityForce = new PVector(0, 0);
-    mu = 0.01;
+    mu = 0.05;
     radius = r;
   }
 
