@@ -267,6 +267,9 @@ class Sphere {
       if(distanceTo(o) <= 0){
         PVector n = new PVector(location.x-o.abs, location.y-o.ord).normalize();
         velocity = velocity.sub(n.mult(2 * velocity.dot(n)));
+        location.x = o.abs - n.normalize().x * (radius + o.radius);
+        location.y = o.ord - n.normalize().y * (radius + o.radius);
+
         
       }
     }
