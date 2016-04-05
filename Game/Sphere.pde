@@ -31,17 +31,17 @@ class Sphere {
     gravity();
     update();
     translate(location.x, -(radius + high/2), location.y);
-    ambientLight(20, 20, 80);
+    
     sphere(radius);
   }
 
   void gravity() {
-    gravityForce.x = sin(rz) * gravityConstant;
-    gravityForce.y = -sin(rx) * gravityConstant;
+    gravityForce.x = sin(box.rz) * gravityConstant;
+    gravityForce.y = -sin(box.rx) * gravityConstant;
   }
 
   void friction() {
-    normalForce = sqrt((pow(cos(rz), 2) + pow(cos(rx), 2))/2);
+    normalForce = sqrt((pow(cos(box.rz), 2) + pow(cos(box.rx), 2))/2);
     frictionMagnitude = normalForce * mu;
     friction = velocity.get();
     friction.mult(-1);
