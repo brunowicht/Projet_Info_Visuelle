@@ -4,7 +4,7 @@ float high = 20;
 float angle_max = PI/3;
 float angle_min = - angle_max;
 float speed = 1.0;
-float gravityConstant = 0.2;
+float gravityConstant = 0.15;
 
 int maxObstacles = 10;
 int nObstacles;
@@ -28,27 +28,23 @@ void draw() {
   background(255);
   if (! shiftMode) {
     camera(width/2, height/4, depth, width/2, height/2, 0, 0, 1, 0);
-    directionalLight(50, 100, 125, 0, -1, 0);
-    ambientLight(102, 102, 102);
+    directionalLight(255, 220, 20, 0, 1, 0);
+    ambientLight(120, 120, 120);
     fill(150);
 
     text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 100, 100);
     pushMatrix();
     box.display();
-    ambientLight(80, 20, 20);
-    if (nObstacles > 0) {
-      for (int i = 0; i< nObstacles; ++i) {    
+      for (Obstacle o: obstacles) {    
         pushMatrix();
-        obstacles.get(i).cylinder();
+        o.cylinder();
         popMatrix();
       }
-    }
-    ambientLight(20, 20, 80);
     sphere.display();
     popMatrix();
   } else {
-    
     camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
+
     fill(150);
     pushMatrix();
     translate(width/2, height/2);
@@ -59,6 +55,7 @@ void draw() {
     for (Obstacle o : obstacles) {
       ellipse(o.abs, o.ord, 2*o.radius, 2*o.radius);
     }
+
     popMatrix();
   }
 }
@@ -204,7 +201,7 @@ class Sphere {
     location = new PVector(0, 0);
     velocity = new PVector(0, 0);
     gravityForce = new PVector(0, 0);
-    mu = 0.05;
+    mu = 0.03;
     radius = r;
   }
 
