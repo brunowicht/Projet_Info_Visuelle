@@ -30,7 +30,8 @@ void draw() {
     camera(width/2, height/4, depth, width/2, height/2, 0, 0, 1, 0);
     directionalLight(50, 100, 125, 0, -1, 0);
     ambientLight(102, 102, 102);
-    
+    fill(150);
+
     text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 100, 100);
     pushMatrix();
     box.display();
@@ -46,17 +47,17 @@ void draw() {
     sphere.display();
     popMatrix();
   } else {
-    camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
     
+    camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
     fill(150);
     pushMatrix();
     translate(width/2, height/2);
     rect(-side/2, -side/2, side, side);
-    if (nObstacles > 0) {
-      for (int i = 0; i< nObstacles; ++i) {
-        fill(200);
-        ellipse(obstacles.get(i).abs, obstacles.get(i).ord, 20, 20);
-      }
+    fill(50);
+    ellipse(sphere.location.x, sphere.location.y, 2*sphere.radius, 2*sphere.radius);
+    fill(200);
+    for (Obstacle o : obstacles) {
+      ellipse(o.abs, o.ord, 2*o.radius, 2*o.radius);
     }
     popMatrix();
   }
@@ -72,7 +73,7 @@ void keyPressed() {
   }
 }
 
-void keyReleased(){
+void keyReleased() {
   if (keyCode == SHIFT) {
     shiftMode = false;
   }
@@ -238,7 +239,7 @@ class Sphere {
     friction.normalize();
     friction.mult(frictionMagnitude);
   }
-  
+
   void checkEdges() {
     if (location.x > side/2) {
       location.x = side/2;
@@ -257,20 +258,18 @@ class Sphere {
       velocity.y = -velocity.y;
     }
   }
-  
-  float distanceTo(Obstacle o){
+
+  float distanceTo(Obstacle o) {
     return sqrt(pow(location.x - o.abs, 2) + pow(location.y - o.ord, 2))  - radius - o.radius;
   }
-  
-  void collide(){
-    for(Obstacle o: obstacles){
-      if(distanceTo(o) <= 0){
-        PVector n = new PVector(location.x-o.abs, location.y-o.ord).normalize();
-        velocity = velocity.sub(n.mult(2 * velocity.dot(n)));
+
+  void collide() {
+    for (Obstacle o : obstacles) {
+      if (distanceTo(o) <= 0) {
+        PVector n = new PVector(location.x-o.abs, location.y-o.ord);
+        velocity = velocity.sub(n.normalize().mult(2 * velocity.dot(n.normalize())));
         location.x = o.abs - n.normalize().x * (radius + o.radius);
         location.y = o.ord - n.normalize().y * (radius + o.radius);
-
-        
       }
     }
   }
