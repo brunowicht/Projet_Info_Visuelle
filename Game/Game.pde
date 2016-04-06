@@ -4,7 +4,7 @@ float high = 20;
 float angle_max = PI/3;
 float angle_min = - angle_max;
 float speed = 1.0;
-float gravityConstant = 0.15;
+float gravityConstant = 0.1;
 
 int maxObstacles = 10;
 int nObstacles;
