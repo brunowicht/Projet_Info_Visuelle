@@ -188,7 +188,6 @@ class Obstacle {
 class Sphere {
   PVector location;
   PVector velocity;
-  PVector gravityForce;
   PVector friction;
   PVector acceleration;
 
@@ -200,13 +199,12 @@ class Sphere {
   Sphere(int r) {
     location = new PVector(0, 0);
     velocity = new PVector(0, 0);
-    gravityForce = new PVector(0, 0);
+    acceleration = new PVector(0, 0);
     mu = 0.03;
     radius = r;
   }
 
   void update() {
-    acceleration = gravityForce.get();
     acceleration.add(friction);
     velocity.add(acceleration);
     location.add(velocity);
@@ -224,8 +222,8 @@ class Sphere {
   }
 
   void gravity() {
-    gravityForce.x = sin(box.rz) * gravityConstant;
-    gravityForce.y = -sin(box.rx) * gravityConstant;
+    acceleration.x = sin(box.rz) * gravityConstant;
+    acceleration.y = -sin(box.rx) * gravityConstant;
   }
 
   void friction() {
