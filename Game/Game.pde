@@ -6,7 +6,6 @@ float angle_min = - angle_max;
 float speed = 1.0;
 float gravityConstant = 0.1;
 
-int maxObstacles = 10;
 int nObstacles;
 boolean shiftMode;
 
@@ -35,11 +34,11 @@ void draw() {
     text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 100, 100);
     pushMatrix();
     box.display();
-      for (Obstacle o: obstacles) {    
-        pushMatrix();
-        o.cylinder();
-        popMatrix();
-      }
+    for (Obstacle o : obstacles) {    
+      pushMatrix();
+      o.cylinder();
+      popMatrix();
+    }
     sphere.display();
     popMatrix();
   } else {
@@ -49,6 +48,7 @@ void draw() {
     pushMatrix();
     translate(width/2, height/2);
     rect(-side/2, -side/2, side, side);
+    text("SHIFT", side/2 + 10, side/2 -10);
     fill(50);
     ellipse(sphere.location.x, sphere.location.y, 2*sphere.radius, 2*sphere.radius);
     fill(200);
@@ -78,13 +78,11 @@ void keyReleased() {
 
 void mouseClicked() {
   if (shiftMode) {
-    if (nObstacles < maxObstacles) {
-      float x = mouseX-width/2;
-      float y = mouseY-height/2;
-      if (x>=(-side/2) && x <= side/2 && y >=(-side/2) && y <= side/2) {
-        obstacles.add(new Obstacle(20, 30, x, y));
-        nObstacles +=1;
-      }
+    float x = mouseX-width/2;
+    float y = mouseY-height/2;
+    if (x>=(-side/2) && x <= side/2 && y >=(-side/2) && y <= side/2) {
+      obstacles.add(new Obstacle(20, 30, x, y));
+      nObstacles +=1;
     }
   }
 }
@@ -139,7 +137,7 @@ class Obstacle {
   Obstacle(float b, float h, float x, float y) {
     radius = b;
     oHeight = h;
-    resolution = 200;
+    resolution = 100;
     abs = x;
     ord = y;
   }
