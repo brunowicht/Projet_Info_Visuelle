@@ -15,29 +15,39 @@ ArrayList<Obstacle> obstacles;
 
 PGraphics bg;
 PGraphics topView;
+PGraphics scoreboard;
 
-
+float score;
+float lastScore;
 
 
 void setup() {
   fullScreen(P3D);
   bg = createGraphics(width, height/4, P2D);
   topView = createGraphics(height/4 - 20, height/4 - 20, P2D);
+  scoreboard = createGraphics(height/4 - 50, height/4 - 20, P2D);
   sphere = new Sphere(10);
   box = new Box(side, high, PI/3);
   obstacles = new ArrayList<Obstacle>();
   shiftMode = false;
   nObstacles = 0;
+  score = 0.0;
+  lastScore = 0.0;
   noStroke();
 }
 void draw() {
   background(255);
+  
   drawBG();
   image(bg, 0, height * 3/4);
+  
   drawTopView();
   image(topView, 10, 10 + height * 3/4);
+  
+  drawScoreboard();
+  image(scoreboard, height/4,  10 + height * 3/4);
   if (! shiftMode) {
-    text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 0, 0);
+    text("Rotation X: "+radToDeg(box.rx)+"\nRotation Z: "+radToDeg(box.rz)+"\nspeed: "+speed, 0, 0);
     camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
     directionalLight(255, 220, 20, 0, 1, 0);
     ambientLight(120, 120, 120);
@@ -110,6 +120,7 @@ void drawBG() {
 void drawTopView() {
   topView.beginDraw();
   topView.background(50, 50, 150);
+  topView.noStroke();
   topView.fill(150, 50, 50);
   float scale = (height/4 -20)/side;
   topView.ellipse(scale*sphere.location.x + topView.width/2, scale*sphere.location.y + topView.height/2, 2*sphere.radius*scale, 2*sphere.radius*scale);
@@ -118,6 +129,16 @@ void drawTopView() {
     topView.ellipse(o.abs*scale + topView.width/2, scale*o.ord + topView.height/2, scale*2*o.radius, scale*2*o.radius);
   }
   topView.endDraw();
+}
+
+void drawScoreboard(){
+  scoreboard.beginDraw();
+  scoreboard.background(180, 150, 150);
+  scoreboard.fill(0);
+  scoreboard.text("Total score:\n"+score, 15,15);
+  scoreboard.text("Velocity:\n"+sphere.speed(), 15, scoreboard.height/2 );
+  scoreboard.text("Last Score:\n"+lastScore, 15, scoreboard.height-20);
+  scoreboard.endDraw();
 }
 
 
@@ -237,6 +258,10 @@ class Sphere {
     velocity.add(acceleration);
     location.add(velocity);
   }
+  
+  float speed(){
+    return sqrt(pow(velocity.x, 2) + pow(velocity.y, 2));
+  }
 
   void display() {
     checkEdges();
@@ -267,18 +292,26 @@ class Sphere {
     if (location.x > side/2) {
       location.x = side/2;
       velocity.x = -velocity.x;
+      lastScore = -speed();
+      score += lastScore;
     }
     if (location.y > side/2) {
       location.y = side/2;
       velocity.y = -velocity.y;
+      lastScore = -speed();
+      score += lastScore;
     }
     if (location.x < -side/2) {
       location.x = -side/2; 
       velocity.x = -velocity.x;
+      lastScore = -speed();
+      score += lastScore;
     }
     if (location.y < -side/2) {
       location.y = -side/2; 
       velocity.y = -velocity.y;
+      lastScore = -speed();
+      score += lastScore;
     }
   }
 
@@ -293,6 +326,8 @@ class Sphere {
         velocity = velocity.sub(n.normalize().mult(2 * velocity.dot(n.normalize())));
         location.x = o.abs - n.normalize().x * (radius + o.radius);
         location.y = o.ord - n.normalize().y * (radius + o.radius);
+        lastScore = speed();
+        score += lastScore;
       }
     }
   }
