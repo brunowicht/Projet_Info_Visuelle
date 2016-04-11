@@ -1,6 +1,6 @@
 float depth = 800;
-float side = 500;
-float high = 20;
+float side = 350;
+float high = 10;
 float angle_max = PI/3;
 float angle_min = - angle_max;
 float speed = 1.0;
@@ -13,10 +13,17 @@ Sphere sphere;
 Box box;
 ArrayList<Obstacle> obstacles;
 
+PGraphics bg;
+PGraphics topView;
+
+
+
 
 void setup() {
   fullScreen(P3D);
-  sphere = new Sphere(15);
+  bg = createGraphics(width, height/4, P2D);
+  topView = createGraphics(height/4 - 20, height/4 - 20, P2D);
+  sphere = new Sphere(10);
   box = new Box(side, high, PI/3);
   obstacles = new ArrayList<Obstacle>();
   shiftMode = false;
@@ -25,13 +32,17 @@ void setup() {
 }
 void draw() {
   background(255);
+  drawBG();
+  image(bg, 0, height * 3/4);
+  drawTopView();
+  image(topView, 10, 10 + height * 3/4);
   if (! shiftMode) {
-    camera(width/2, height/4, depth, width/2, height/2, 0, 0, 1, 0);
+    text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 0, 0);
+    camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
     directionalLight(255, 220, 20, 0, 1, 0);
     ambientLight(120, 120, 120);
     fill(150);
 
-    text("Rotation X: "+radToDeg(box.rx)+"   Rotation Z: "+radToDeg(box.rz)+"   speed: "+speed, 100, 100);
     pushMatrix();
     box.display();
     for (Obstacle o : obstacles) {    
@@ -88,6 +99,25 @@ void mouseClicked() {
 }
 float radToDeg(float angle) {
   return angle * 180/PI;
+}
+
+void drawBG() {
+  bg.beginDraw();
+  bg.background(160, 120, 120);
+  bg.endDraw();
+}
+
+void drawTopView() {
+  topView.beginDraw();
+  topView.background(50, 50, 150);
+  topView.fill(150, 50, 50);
+  float scale = (height/4 -20)/side;
+  topView.ellipse(scale*sphere.location.x + topView.width/2, scale*sphere.location.y + topView.height/2, 2*sphere.radius*scale, 2*sphere.radius*scale);
+  topView.fill(50,150,50);
+  for(Obstacle o: obstacles){
+    topView.ellipse(o.abs*scale + topView.width/2, scale*o.ord + topView.height/2, scale*2*o.radius, scale*2*o.radius);
+  }
+  topView.endDraw();
 }
 
 
