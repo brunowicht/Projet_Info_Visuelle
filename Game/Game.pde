@@ -16,9 +16,14 @@ ArrayList<Obstacle> obstacles;
 PGraphics bg;
 PGraphics topView;
 PGraphics scoreboard;
+PGraphics barChart;
 
 float score;
 float lastScore;
+int time;
+ArrayList<Float> scores;
+
+HScrollbar hs;
 
 
 void setup() {
@@ -26,6 +31,10 @@ void setup() {
   bg = createGraphics(width, height/4, P2D);
   topView = createGraphics(height/4 - 20, height/4 - 20, P2D);
   scoreboard = createGraphics(height/4 - 50, height/4 - 20, P2D);
+  barChart = createGraphics(2*width/3, bg.height* 3/4, P2D);
+  
+  hs = new HScrollbar(width/3 -10, height - 30,300,20);
+  
   sphere = new Sphere(10);
   box = new Box(side, high, PI/3);
   obstacles = new ArrayList<Obstacle>();
@@ -33,22 +42,33 @@ void setup() {
   nObstacles = 0;
   score = 0.0;
   lastScore = 0.0;
+  time = 0;
+  scores = new ArrayList<Float>();
   noStroke();
 }
 void draw() {
   background(255);
+
   
   drawBG();
   image(bg, 0, height * 3/4);
-  
+
   drawTopView();
   image(topView, 10, 10 + height * 3/4);
-  
+
   drawScoreboard();
-  image(scoreboard, height/4,  10 + height * 3/4);
+  image(scoreboard, height/4, 10 + height * 3/4);
+
+  drawBarChart();
+  image(barChart, width/3 -10, 10 + height * 3/4);
+  
+  hs.update();
+  hs.display();
+
   if (! shiftMode) {
+    ++time;
+    scoreRegister();
     text("Rotation X: "+radToDeg(box.rx)+"\nRotation Z: "+radToDeg(box.rz)+"\nspeed: "+speed, 0, 0);
-    camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
     directionalLight(255, 220, 20, 0, 1, 0);
     ambientLight(120, 120, 120);
     fill(150);
@@ -63,7 +83,6 @@ void draw() {
     sphere.display();
     popMatrix();
   } else {
-    camera(width/2, height/2, depth, width/2, height/2, 0, 0, 1, 0);
 
     fill(150);
     pushMatrix();
@@ -78,6 +97,12 @@ void draw() {
     }
 
     popMatrix();
+  }
+}
+
+void scoreRegister() {
+  if (time % 30 == 0) {
+    scores.add(score);
   }
 }
 
@@ -119,27 +144,47 @@ void drawBG() {
 
 void drawTopView() {
   topView.beginDraw();
-  topView.background(50, 50, 150);
+  topView.background(250, 220, 15);
   topView.noStroke();
   topView.fill(150, 50, 50);
   float scale = (height/4 -20)/side;
   topView.ellipse(scale*sphere.location.x + topView.width/2, scale*sphere.location.y + topView.height/2, 2*sphere.radius*scale, 2*sphere.radius*scale);
-  topView.fill(50,150,50);
-  for(Obstacle o: obstacles){
+  topView.fill(50, 150, 50);
+  for (Obstacle o : obstacles) {
     topView.ellipse(o.abs*scale + topView.width/2, scale*o.ord + topView.height/2, scale*2*o.radius, scale*2*o.radius);
   }
   topView.endDraw();
 }
 
-void drawScoreboard(){
+void drawScoreboard() {
   scoreboard.beginDraw();
   scoreboard.background(180, 150, 150);
   scoreboard.fill(0);
-  scoreboard.text("Total score:\n"+score, 15,15);
+  scoreboard.text("Total score:\n"+score, 15, 15);
   scoreboard.text("Velocity:\n"+sphere.speed(), 15, scoreboard.height/2 );
   scoreboard.text("Last Score:\n"+lastScore, 15, scoreboard.height-20);
   scoreboard.endDraw();
 }
+
+void drawBarChart() {
+  int w = 5;
+  float fact = hs.getPos();
+  barChart.beginDraw();
+  barChart.background(180, 150, 150);
+  int nbSquare = 0;
+  int x = 0;
+  barChart.noStroke();
+  barChart.fill(255, 255, 200);
+  for (float s : scores) {
+    nbSquare = floor(s/2);
+    for (int i = 0; i < nbSquare; ++i) {
+      barChart.rect((2 * w * fact + 2)*x+ 5, barChart.height -10 - 6*i, 2 * w * fact + 1, w );
+    }
+    ++x;
+  }
+  barChart.endDraw();
+}
+
 
 
 class Box {
@@ -166,7 +211,7 @@ class Box {
   }
 
   void boxRotation() {
-    if (mousePressed == true) {
+    if (mousePressed == true && mouseY <= height * 3/4) {
       rx = rx + speed*(map(pmouseY - mouseY, 0, width, 0, 2*PI));
       rz = rz - speed*(map(pmouseX - mouseX, 0, height, 0, 2*PI));
     }
@@ -258,8 +303,8 @@ class Sphere {
     velocity.add(acceleration);
     location.add(velocity);
   }
-  
-  float speed(){
+
+  float speed() {
     return sqrt(pow(velocity.x, 2) + pow(velocity.y, 2));
   }
 
@@ -330,5 +375,104 @@ class Sphere {
         score += lastScore;
       }
     }
+  }
+}
+
+class HScrollbar {
+  float barWidth; //Bar's width in pixels
+  float barHeight; //Bar's height in pixels
+  float xPosition; //Bar's x position in pixels
+  float yPosition; //Bar's y position in pixels
+  float sliderPosition, newSliderPosition; //Position of slider
+  float sliderPositionMin, sliderPositionMax; //Max and min values of slider
+  boolean mouseOver; //Is the mouse over the slider?
+  boolean locked; //Is the mouse clicking and dragging the slider now?
+  /**
+   * @brief Creates a new horizontal scrollbar
+   *
+   * @param x The x position of the top left corner of the bar in pixels
+   * @param y The y position of the top left corner of the bar in pixels
+   * @param w The width of the bar in pixels
+   * @param h The height of the bar in pixels
+   */
+  HScrollbar (float x, float y, float w, float h) {
+    barWidth = w;
+    barHeight = h;
+    xPosition = x;
+    yPosition = y;
+    sliderPosition = xPosition + barWidth/2 - barHeight/2;
+    newSliderPosition = sliderPosition;
+    sliderPositionMin = xPosition;
+    sliderPositionMax = xPosition + barWidth - barHeight;
+  }
+  /**
+   * @brief Updates the state of the scrollbar according to the mouse movement
+   */
+  void update() {
+    if (isMouseOver()) {
+      mouseOver = true;
+    } else {
+      mouseOver = false;
+    }
+    if (mousePressed && mouseOver) {
+      locked = true;
+    }
+    if (!mousePressed) {
+      locked = false;
+    }
+    if (locked) {
+      newSliderPosition = constrain(mouseX - barHeight/2, sliderPositionMin, sliderPositionMax);
+    }
+    if (abs(newSliderPosition - sliderPosition) > 1) {
+      sliderPosition = sliderPosition + (newSliderPosition - sliderPosition);
+    }
+  }
+  /**
+   * @brief Clamps the value into the interval
+   *
+   * @param val The value to be clamped
+   * @param minVal Smallest value possible
+   * @param maxVal Largest value possible
+   *
+   * @return val clamped into the interval [minVal, maxVal]
+   */
+  float constrain(float val, float minVal, float maxVal) {
+    return min(max(val, minVal), maxVal);
+  }
+  /**
+   * @brief Gets whether the mouse is hovering the scrollbar
+   *
+   * @return Whether the mouse is hovering the scrollbar
+   */
+  boolean isMouseOver() {
+    if (mouseX > xPosition && mouseX < xPosition+barWidth &&
+      mouseY > yPosition && mouseY < yPosition+barHeight) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  /**
+   * @brief Draws the scrollbar in its current state
+   */
+  void display() {
+    noStroke();
+    fill(204);
+    rect(xPosition, yPosition, barWidth, barHeight);
+    if (mouseOver || locked) {
+      fill(0, 0, 0);
+    } else {
+      fill(102, 102, 102);
+    }
+    rect(sliderPosition, yPosition, barHeight, barHeight);
+  }
+  /**
+   * @brief Gets the slider position
+   *
+   * @return The slider position in the interval [0,1]
+   * corresponding to [leftmost position, rightmost position]
+   */
+  float getPos() {
+    return (sliderPosition - xPosition)/(barWidth - barHeight);
   }
 }
