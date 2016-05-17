@@ -22,7 +22,7 @@ void settings() {
 
 
 void setup() {
-  /*String[] cameras = Capture.list();
+   /*String[] cameras = Capture.list();
    if (cameras.length == 0) {
    println("There are no cameras available for capture.");
    exit();
@@ -43,21 +43,22 @@ void draw() {
   /*if (cam.available() == true) {
    cam.read();
    }
-   img = cam.get();
-   img.filter(BLUR, 2);*/
-  img = loadImage("board4.jpg");
+   img = cam.get();*/
+  img = loadImage("board1.jpg");
   img.resize(width/2, height/2);
 
   image(img, 0, 0);
-  //img.filter(BLUR, 2);
+  
   PImage result;
 
-  result = thresh(img);
+  result = huethresh(img);
+  result.filter(BLUR, 3);
+  result = intensitythresh(result);
 
   PImage result2;
   result2 = sobel(result);
 
-  ArrayList<PVector> lines = hough(result2, 4);
+  ArrayList<PVector> lines = hough(result2, 6);
   getIntersections(lines);
   image(result, 0, height/2);
   image(result2, width/2, 0);
@@ -86,7 +87,7 @@ ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
   return intersections;
 }
 
-PImage thresh(PImage img) {
+PImage huethresh(PImage img) {
   thresh = 256 * thresholdBar.getPos();
   thresh2 = 256 * thresholdBar2.getPos();
   PImage result = createImage(img.width, img.height, RGB);
@@ -96,6 +97,24 @@ PImage thresh(PImage img) {
       color c = img.pixels[i];
       float h = hue(c);
       if (h < thresh2 && h > thresh) {
+        result.pixels[i] = white;
+      } else {
+        result.pixels[i] = black;
+      }
+    }
+    updatePixels();
+  }
+  return result;
+}
+
+PImage intensitythresh(PImage img) {
+  PImage result = createImage(img.width, img.height, RGB);
+  {
+    loadPixels();
+    for (int i = 0; i < img.width * img.height; i++) {
+      color c = img.pixels[i];
+      float h = brightness(c);
+      if (h > 220) {
         result.pixels[i] = white;
       } else {
         result.pixels[i] = black;
@@ -236,7 +255,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   int neighbourhood = 10;
   // only search around lines with more that this amount of votes
   // (to be adapted to your image)
-  int minVotes = 100;
+  int minVotes = 50;
   for (int accR = 0; accR < rDim; accR++) {
     for (int accPhi = 0; accPhi < phiDim; accPhi++) {
       // compute current index in the accumulator
