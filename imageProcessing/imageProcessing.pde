@@ -11,62 +11,57 @@ color black = color(0, 0, 0);
 float thresh;
 float thresh2;
 
-
-HScrollbar thresholdBar;
-HScrollbar thresholdBar2;
-
+boolean camera =false;
+String imageName = "board4.jpg";
 
 void settings() {
-  size(640, 480);
+  size(960, 240);
 }
 
 
 void setup() {
-   /*String[] cameras = Capture.list();
-   if (cameras.length == 0) {
-   println("There are no cameras available for capture.");
-   exit();
-   } else {
-   println("Available cameras:");
-   for (int i = 0; i < cameras.length; i++) {
-   println(cameras[i]);
-   }
-   cam = new Capture(this, cameras[5]);
-   cam.start();
-   }*/
-
-  thresholdBar = new HScrollbar(0, (height/2) - 12, 320, 12);
-  thresholdBar2 = new HScrollbar(0, (height/2) - 30, 320, 12);
-  //noLoop();
+  if (camera) {
+    String[] cameras = Capture.list();
+    if (cameras.length == 0) {
+      println("There are no cameras available for capture.");
+      exit();
+    } else {
+      println("Available cameras:");
+      for (int i = 0; i < cameras.length; i++) {
+        println(cameras[i]);
+      }
+      cam = new Capture(this, cameras[5]);
+      cam.start();
+    }
+  } else {
+    noLoop();
+  }
 }
 void draw() {
-  /*if (cam.available() == true) {
-   cam.read();
-   }
-   img = cam.get();*/
-  img = loadImage("board1.jpg");
-  img.resize(width/2, height/2);
+  if (camera) {
+    if (cam.available() == true) {
+      cam.read();
+    }
+    img = cam.get();
+  } else {
+    img = loadImage(imageName);
+    img.resize(width/3, height);
+  }
 
   image(img, 0, 0);
-  
-  PImage result;
 
-  result = huethresh(img);
-  result.filter(BLUR, 3);
-  result = intensitythresh(result);
+  PImage thresh;
 
-  PImage result2;
-  result2 = sobel(result);
+  thresh = huethresh(img);
+  thresh.filter(BLUR, 2);
+  thresh = intensitythresh(thresh, 150);
 
-  ArrayList<PVector> lines = hough(result2, 6);
+  PImage sobel;
+  sobel = sobel(thresh);
+
+  ArrayList<PVector> lines = hough(sobel, 4);
   getIntersections(lines);
-  image(result, 0, height/2);
-  image(result2, width/2, 0);
-
-  thresholdBar2.display();
-  thresholdBar2.update();
-  thresholdBar.display();
-  thresholdBar.update();
+  image(sobel, 2* width/3, 0);
 }
 
 ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
@@ -81,22 +76,22 @@ ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
       int x = (int) ((line2.x * sin(line1.y) - line1.x * sin(line2.y))/d);
       int y = (int) ((line1.x * cos(line2.y) - line2.x * cos(line1.y))/d);
       fill(255, 128, 0);
-      ellipse(x, y, 10, 10);
+      if (x < img.width && x > 0 && y < img.height && y > 0) {
+        ellipse(x, y, 10, 10);
+      }
     }
   }
   return intersections;
 }
 
 PImage huethresh(PImage img) {
-  thresh = 256 * thresholdBar.getPos();
-  thresh2 = 256 * thresholdBar2.getPos();
   PImage result = createImage(img.width, img.height, RGB);
   {
     loadPixels();
     for (int i = 0; i < img.width * img.height; i++) {
       color c = img.pixels[i];
       float h = hue(c);
-      if (h < thresh2 && h > thresh) {
+      if (h < 138 && h > 100) {
         result.pixels[i] = white;
       } else {
         result.pixels[i] = black;
@@ -107,14 +102,14 @@ PImage huethresh(PImage img) {
   return result;
 }
 
-PImage intensitythresh(PImage img) {
+PImage intensitythresh(PImage img, int bright) {
   PImage result = createImage(img.width, img.height, RGB);
   {
     loadPixels();
     for (int i = 0; i < img.width * img.height; i++) {
       color c = img.pixels[i];
       float h = brightness(c);
-      if (h > 220) {
+      if (h > bright) {
         result.pixels[i] = white;
       } else {
         result.pixels[i] = black;
@@ -241,14 +236,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
     }
   }
 
-  PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
-  for (int i = 0; i < accumulator.length; i++) {
-    houghImg.pixels[i] = color(min(255, accumulator[i]));
-  }
-  // You may want to resize the accumulator to make it easier to see:
-  houghImg.resize(width/2, height/2);
-  houghImg.updatePixels();
-  image(houghImg, width/2, height/2);
+
 
   ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
   // size of the region we search for a local maximum
@@ -332,108 +320,19 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
         line(x2, y2, x3, y3);
     }
   }
+
+  PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
+  for (int i = 0; i < accumulator.length; i++) {
+    houghImg.pixels[i] = color(min(255, accumulator[i]));
+  }
+  // You may want to resize the accumulator to make it easier to see:
+  houghImg.resize(width/3, height);
+  houghImg.updatePixels();
+  image(houghImg, width/3, 0);
+
   return lines;
 }
 
-class HScrollbar {
-  float barWidth; //Bar's width in pixels
-  float barHeight; //Bar's height in pixels
-  float xPosition; //Bar's x position in pixels
-  float yPosition; //Bar's y position in pixels
-  float sliderPosition, newSliderPosition; //Position of slider
-  float sliderPositionMin, sliderPositionMax; //Max and min values of slider
-  boolean mouseOver; //Is the mouse over the slider?
-  boolean locked; //Is the mouse clicking and dragging the slider now?
-  /**
-   * @brief Creates a new horizontal scrollbar
-   *
-   * @param x The x position of the top left corner of the bar in pixels
-   * @param y The y position of the top left corner of the bar in pixels
-   * @param w The width of the bar in pixels
-   * @param h The height of the bar in pixels
-   */
-  HScrollbar (float x, float y, float w, float h) {
-    barWidth = w;
-    barHeight = h;
-    xPosition = x;
-    yPosition = y;
-    sliderPosition = xPosition + barWidth/2 - barHeight/2;
-    newSliderPosition = sliderPosition;
-    sliderPositionMin = xPosition;
-    sliderPositionMax = xPosition + barWidth - barHeight;
-  }
-
-  /**
-   * @brief Updates the state of the scrollbar according to the mouse movement
-   */
-  void update() {
-    if (isMouseOver()) {
-      mouseOver = true;
-    } else {
-      mouseOver = false;
-    }
-    if (mousePressed && mouseOver) {
-      locked = true;
-    }
-    if (!mousePressed) {
-      locked = false;
-    }
-    if (locked) {
-      newSliderPosition = constrain(mouseX - barHeight/2, sliderPositionMin, sliderPositionMax);
-    }
-    if (abs(newSliderPosition - sliderPosition) > 1) {
-      sliderPosition = sliderPosition + (newSliderPosition - sliderPosition);
-    }
-  }
-  /**
-   * @brief Clamps the value into the interval
-   *
-   * @param val The value to be clamped
-   * @param minVal Smallest value possible
-   * @param maxVal Largest value possible
-   *
-   * @return val clamped into the interval [minVal, maxVal]
-   */
-  float constrain(float val, float minVal, float maxVal) {
-    return min(max(val, minVal), maxVal);
-  }
-  /**
-   * @brief Gets whether the mouse is hovering the scrollbar
-   *
-   * @return Whether the mouse is hovering the scrollbar
-   */
-  boolean isMouseOver() {
-    if (mouseX > xPosition && mouseX < xPosition+barWidth &&
-      mouseY > yPosition && mouseY < yPosition+barHeight) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-  /**
-   * @brief Draws the scrollbar in its current state
-   */
-  void display() {
-    noStroke();
-    fill(204);
-    rect(xPosition, yPosition, barWidth, barHeight);
-    if (mouseOver || locked) {
-      fill(0, 0, 0);
-    } else {
-      fill(102, 102, 102);
-    }
-    rect(sliderPosition, yPosition, barHeight, barHeight);
-  }
-  /**
-   * @brief Gets the slider position
-   *
-   * @return The slider position in the interval [0,1]
-   * corresponding to [leftmost position, rightmost position]
-   */
-  float getPos() {
-    return (sliderPosition - xPosition)/(barWidth - barHeight);
-  }
-}
 
 class HoughComparator implements java.util.Comparator<Integer> {
   int[] accumulator;
