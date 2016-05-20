@@ -14,7 +14,7 @@ int bThresh = 150;
 int numLines = 4;
 
 boolean camera =false;
-String imageName = "board4.jpg";
+String imageName = "board1.jpg";
 
 void settings() {
   size(960, 240);
@@ -183,7 +183,6 @@ PImage sobel(PImage img) {
   int N = hKernel.length;
   int widthLimit = img.width- N/2;
   int heightLimit = img.height- N/2;
-  int pixel = 0;
   int numPixel = 0;
   int theP = 0;
 
@@ -203,7 +202,6 @@ PImage sobel(PImage img) {
 
   for (int x = N/2; x < widthLimit; ++x) {
     for (int y = N/2; y < heightLimit; ++y) {
-      pixel = 0;
       numPixel = (y)*img.width + x;
       sum_h = 0;
       sum_v = 0;
@@ -220,7 +218,7 @@ PImage sobel(PImage img) {
     }
   }
   result.loadPixels();
-  
+
   for (int y = 1; y < heightLimit; y++) { // Skip top and bottom edges
     for (int x = 1; x < widthLimit; x++) { // Skip left and right
       if (buffer[y * img.width + x] > (int)(max * 0.3f)) { // 30% of the max
@@ -235,14 +233,14 @@ PImage sobel(PImage img) {
 }
 
 ArrayList<PVector> hough(PImage edgeImg, int nLines) {
-  
+
   float discretizationStepsPhi = 0.06f;
   float discretizationStepsR = 2.5f;
-  
+
   // dimensions of the accumulator
   int phiDim = (int) (Math.PI / discretizationStepsPhi);
   int rDim = (int) (((edgeImg.width + edgeImg.height) * 2 + 1) / discretizationStepsR);
-  
+
   // our accumulator (with a 1 pix margin around)
   int[] accumulator = new int[(phiDim + 2) * (rDim + 2)];
 
@@ -251,13 +249,13 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   float[] tabCos = new float[phiDim];
   float ang = 0;
   float inverseR = 1.f / discretizationStepsR;
-  
+
   for (int accPhi = 0; accPhi < phiDim; ang += discretizationStepsPhi, accPhi++) {
     // we can also pre-multiply by (1/discretizationStepsR) since we need it in the Hough loop
     tabSin[accPhi] = (float) (Math.sin(ang) * inverseR);
     tabCos[accPhi] = (float) (Math.cos(ang) * inverseR);
   }
-  
+
   int heightLimit = edgeImg.height;
   int widthLimit = edgeImg.width;
 
@@ -277,22 +275,25 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
 
 
   ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
-  
+
   // size of the region we search for a local maximum
   int neighbourhood = 10;
-  
+
   // only search around lines with more that this amount of votes
   // (to be adapted to your image)
   int minVotes = 50;
   int neighbourhoodLimit = neighbourhood/2+1;
   int neighbourIdx = 0;
-  
+
   for (int accR = 0; accR < rDim; accR++) {
     for (int accPhi = 0; accPhi < phiDim; accPhi++) {
+
       // compute current index in the accumulator
       int idx = (accPhi + 1) * (rDim + 2) + accR + 1;
+
       if (accumulator[idx] > minVotes) {
         boolean bestCandidate=true;
+
         // iterate over the neighbourhood
         for (int dPhi=-neighbourhood/2; dPhi < neighbourhoodLimit; dPhi++) {
           // check we are not outside the image
@@ -301,6 +302,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
             // check we are not outside the image
             if (accR+dR < 0 || accR+dR >= rDim) continue;
             neighbourIdx = (accPhi + dPhi + 1) * (rDim + 2) + accR + dR + 1;
+
             if (accumulator[idx] < accumulator[neighbourIdx]) {
               // the current idx is not a local maximum!
               bestCandidate=false;
@@ -321,21 +323,19 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   ArrayList<PVector> lines = new ArrayList<PVector>();
 
   int nBestLimit =  min(nLines, bestCandidates.size());
+
   for (int i = 0; i < nBestLimit; i++) {
     int idx = bestCandidates.get(i);
+
     // first, compute back the (r, phi) polar coordinates:
     int accPhi = (int) (idx / (rDim + 2)) - 1;
     int accR = idx - (accPhi + 1) * (rDim + 2) - 1;
     float r = (accR - (rDim - 1) * 0.5f) * discretizationStepsR;
     float phi = accPhi * discretizationStepsPhi;
+
     PVector v = new PVector(r, phi);
     lines.add(v);
-    // Cartesian equation of a line: y = ax + b
-    // in polar, y = (-cos(phi)/sin(phi))x + (r/sin(phi))
-    // => y = 0 : x = r / cos(phi)
-    // => x = 0 : y = r / sin(phi)
-    // compute the intersection of this line with the 4 borders of
-    // the image
+
     int x0 = 0;
     int y0 = (int) ((r / sin(phi)));
     int x1 = (int) (r / cos(phi));
@@ -344,6 +344,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
     int y2 = (int) (-cos(phi) / sin(phi) * x2 + r / sin(phi));
     int y3 = edgeImg.height;
     int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
+
     // Finally, plot the lines
     stroke(204, 102, 0);
     if (y0 > 0) {

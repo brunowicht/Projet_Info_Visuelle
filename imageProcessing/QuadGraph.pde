@@ -6,15 +6,15 @@ class QuadGraph {
 
   void build(List<PVector> lines, int width, int height) {
 
-    int lineSize = lines.size();
+    int linesSize = lines.size();
 
     // The maximum possible number of edges is n * (n - 1)/2
-    graph = new int[lineSize * (lineSize - 1)/2][2];
+    graph = new int[linesSize * (linesSize - 1)/2][2];
 
     int idx =0;
     
-    for (int i = 0; i < lineSize; i++) {
-      for (int j = i + 1; j < lineSize; j++) {
+    for (int i = 0; i < linesSize; i++) {
+      for (int j = i + 1; j < linesSize; j++) {
         if (intersect(lines.get(i), lines.get(j), width, height)) {
 
           // TODO
@@ -76,8 +76,9 @@ class QuadGraph {
     int n = path[0];
     int x;
     int[] sub = new int[path.length + 1];
+    int graphLength = graph.length;
 
-    for (int i = 0; i < graph.length; i++)
+    for (int i = 0; i < graphLength; i++)
       for (int y = 0; y <= 1; y++)
         if (graph[i][y] == n)
           //  edge refers to our current node
@@ -106,9 +107,11 @@ class QuadGraph {
   //  check of both arrays have same lengths and contents
   Boolean equals(int[] a, int[] b)
   {
-    Boolean ret = (a[0] == b[0]) && (a.length == b.length);
+    int aLength = a.length; 
+    int bLength = b.length;
+    Boolean ret = (a[0] == b[0]) && (aLength == bLength);
 
-    for (int i = 1; ret && (i < a.length); i++)
+    for (int i = 1; ret && (i < aLength); i++)
     {
       if (a[i] != b[i])
       {
@@ -122,11 +125,12 @@ class QuadGraph {
   //  create a path array with reversed order
   int[] invert(int[] path)
   {
-    int[] p = new int[path.length];
+    int pathLength = path.length;
+    int[] p = new int[pathLength];
 
-    for (int i = 0; i < path.length; i++)
+    for (int i = 0; i < pathLength; i++)
     {
-      p[i] = path[path.length - 1 - i];
+      p[i] = path[pathLength - 1 - i];
     }
 
     return normalize(p);
