@@ -8,11 +8,13 @@ Capture cam;
 PImage img;
 color white = color(255, 255, 255);
 color black = color(0, 0, 0);
-float thresh;
-float thresh2;
+int threshmin = 100;
+int threshmax = 135;
+int bThresh = 150;
+int numLines = 4;
 
 boolean camera =false;
-String imageName = "board1.jpg";
+String imageName = "board4.jpg";
 
 void settings() {
   size(960, 240);
@@ -27,7 +29,8 @@ void setup() {
       exit();
     } else {
       println("Available cameras:");
-      for (int i = 0; i < cameras.length; i++) {
+      int camL = cameras.length;
+      for (int i = 0; i < camL; i++) {
         println(cameras[i]);
       }
       cam = new Capture(this, cameras[5]);
@@ -48,27 +51,30 @@ void draw() {
     img.resize(width/3, height);
   }
 
+
+
+
+  PImage hueThresh = huethresh(img);
+  PImage convolute = convolute(convolute(hueThresh));
+  PImage brightThresh = intensitythresh(convolute, bThresh);
+
+
+  PImage sobel = sobel(brightThresh);
   image(img, 0, 0);
 
-  PImage thresh;
-
-  thresh = huethresh(img);
-  thresh.filter(BLUR, 2);
-  thresh = intensitythresh(thresh, 150);
-
-  PImage sobel;
-  sobel = sobel(thresh);
-
-  ArrayList<PVector> lines = hough(sobel, 4);
+  ArrayList<PVector> lines = hough(sobel, numLines);
   getIntersections(lines);
+
   image(sobel, 2* width/3, 0);
 }
 
 ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
   ArrayList<PVector> intersections = new ArrayList<PVector>();
-  for (int i = 0; i < lines.size() - 1; i++) {
+  int linesSize = lines.size() - 1;
+  for (int i = 0; i < linesSize; i++) {
     PVector line1 = lines.get(i);
-    for (int j = i + 1; j < lines.size(); j++) {
+    int linesSize2 = linesSize +1; 
+    for (int j = i + 1; j < linesSize2; j++) {
       PVector line2 = lines.get(j);
       // compute the intersection and add it to 'intersections'
       // draw the intersection
@@ -88,10 +94,10 @@ PImage huethresh(PImage img) {
   PImage result = createImage(img.width, img.height, RGB);
   {
     loadPixels();
-    for (int i = 0; i < img.width * img.height; i++) {
-      color c = img.pixels[i];
-      float h = hue(c);
-      if (h < 138 && h > 100) {
+    int pixelSize = img.width * img.height; 
+    for (int i = 0; i < pixelSize; i++) {
+      float h = hue(img.pixels[i]);
+      if (h < threshmax && h > threshmin) {
         result.pixels[i] = white;
       } else {
         result.pixels[i] = black;
@@ -106,9 +112,9 @@ PImage intensitythresh(PImage img, int bright) {
   PImage result = createImage(img.width, img.height, RGB);
   {
     loadPixels();
-    for (int i = 0; i < img.width * img.height; i++) {
-      color c = img.pixels[i];
-      float h = brightness(c);
+    int pixelSize = img.width * img.height;
+    for (int i = 0; i < pixelSize; i++) {
+      float h = brightness(img.pixels[i]);
       if (h > bright) {
         result.pixels[i] = white;
       } else {
@@ -123,34 +129,45 @@ PImage intensitythresh(PImage img, int bright) {
 
 
 PImage convolute(PImage img) {
-  float weight = 100;
+
+  float weight = 0;
   float[][] kernel ={{3, 4, 3}, {4, 5, 4}, {3, 4, 3}};
-  // create a greyscale image (type: ALPHA) for output
-  PImage result = createImage(img.width, img.height, ALPHA);
 
-  int N = kernel.length;
-  //
-  for (int x = N/2; x < img.width- N/2; ++x) {
-    for (int y = N/2; y < img.height- N/2; ++y) {
-      int pixel = 0;
-      int numPixel = (y)*img.width + x;
-      for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < N; ++j) {
-          int theP = (y+i - N/2)*img.width + x+j - N/2;
-
-          pixel += img.pixels[theP] * kernel[i][j];
-        }
-      }
-      result.pixels[numPixel] =(int) (pixel/weight);
+  int iMax = kernel.length;
+  int jMax = kernel[0].length;
+  for (int i = 0; i < iMax; ++i) {
+    for (int j = 0; j < jMax; ++j) {
+      weight += kernel[i][j];
     }
   }
 
-  // for each (x,y) pixel in the image:
-  // - multiply intensities for pixels in the range
-  // (x - N/2, y - N/2) to (x + N/2, y + N/2) by the
-  // corresponding weights in the kernel matrix
-  // - sum all these intensities and divide it by the weight
-  // - set result.pixels[y * img.width + x] to this value
+
+  int N = kernel.length;
+  int widthLimit = img.width- N/2;
+  int heightLimit = img.height- N/2;
+  int pixel = 0;
+  int numPixel = 0;
+  int theP = 0;
+
+  PImage result = createImage(img.width, img.height, ALPHA);
+  {
+    result.loadPixels();
+    for (int x = N/2; x < widthLimit; ++x) {
+      for (int y = N/2; y < heightLimit; ++y) {
+        pixel = 0;
+        numPixel = (y)*img.width + x;
+        for (int i = 0; i < N; ++i) {
+          for (int j = 0; j < N; ++j) {
+            theP = (y+i - N/2)*img.width + x+j - N/2;
+
+            pixel += brightness(img.pixels[theP]) * kernel[i][j];
+          }
+        }
+        result.pixels[numPixel] =(int) color(pixel/weight);
+      }
+    }
+    result.updatePixels();
+  }
   return result;
 }
 
@@ -163,7 +180,13 @@ PImage sobel(PImage img) {
     { 1, 0, -1 }, 
     { 0, 0, 0 } };
 
-  int size = hKernel.length;
+  int N = hKernel.length;
+  int widthLimit = img.width- N/2;
+  int heightLimit = img.height- N/2;
+  int pixel = 0;
+  int numPixel = 0;
+  int theP = 0;
+
   PImage result = createImage(img.width, img.height, ALPHA);
   // clear the image
   for (int i = 0; i < img.width * img.height; i++) {
@@ -178,19 +201,28 @@ PImage sobel(PImage img) {
   float sum_v = 0.0;
   float sum = 0.0;
 
-  for (int y = 2; y < img.height - 2; y++) {
-    for (int x = 2; x < img.width - 2; x++) {
-      int p = y * img.width + x;
-      sum_h = img.pixels[p- img.width] - img.pixels[p + img.width];
-      sum_v = img.pixels[p-1] - img.pixels[p+1];
+  for (int x = N/2; x < widthLimit; ++x) {
+    for (int y = N/2; y < heightLimit; ++y) {
+      pixel = 0;
+      numPixel = (y)*img.width + x;
+      sum_h = 0;
+      sum_v = 0;
+      for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+          theP = (y+i - N/2)*img.width + x+j - N/2;
+          sum_h += brightness(img.pixels[theP]) * hKernel[i][j];
+          sum_v += brightness(img.pixels[theP]) * vKernel[i][j];
+        }
+      }
       sum = sqrt(pow(sum_h, 2) + pow(sum_v, 2));
-      buffer[p] = sum;
+      buffer[numPixel] = sum;
       max = max(max, sum);
     }
   }
   result.loadPixels();
-  for (int y = 2; y < img.height - 2; y++) { // Skip top and bottom edges
-    for (int x = 2; x < img.width - 2; x++) { // Skip left and right
+  
+  for (int y = 1; y < heightLimit; y++) { // Skip top and bottom edges
+    for (int x = 1; x < widthLimit; x++) { // Skip left and right
       if (buffer[y * img.width + x] > (int)(max * 0.3f)) { // 30% of the max
         result.pixels[y * img.width + x] = color(255);
       } else {
@@ -203,30 +235,34 @@ PImage sobel(PImage img) {
 }
 
 ArrayList<PVector> hough(PImage edgeImg, int nLines) {
+  
   float discretizationStepsPhi = 0.06f;
   float discretizationStepsR = 2.5f;
+  
   // dimensions of the accumulator
   int phiDim = (int) (Math.PI / discretizationStepsPhi);
   int rDim = (int) (((edgeImg.width + edgeImg.height) * 2 + 1) / discretizationStepsR);
+  
   // our accumulator (with a 1 pix margin around)
   int[] accumulator = new int[(phiDim + 2) * (rDim + 2)];
-  // Fill the accumulator: on edge points (ie, white pixels of the edge
-  // image), store all possible (r, phi) pairs describing lines going
-  // through the point.
 
   // pre-compute the sin and cos values
   float[] tabSin = new float[phiDim];
   float[] tabCos = new float[phiDim];
   float ang = 0;
   float inverseR = 1.f / discretizationStepsR;
+  
   for (int accPhi = 0; accPhi < phiDim; ang += discretizationStepsPhi, accPhi++) {
     // we can also pre-multiply by (1/discretizationStepsR) since we need it in the Hough loop
     tabSin[accPhi] = (float) (Math.sin(ang) * inverseR);
     tabCos[accPhi] = (float) (Math.cos(ang) * inverseR);
   }
+  
+  int heightLimit = edgeImg.height;
+  int widthLimit = edgeImg.width;
 
-  for (int y = 0; y < edgeImg.height; y++) {
-    for (int x = 0; x < edgeImg.width; x++) {
+  for (int y = 0; y < heightLimit; y++) {
+    for (int x = 0; x < widthLimit; x++) {
       // Are we on an edge?
       if (brightness(edgeImg.pixels[y * edgeImg.width + x]) != 0) {
         for (int phi = 0; phi < phiDim; ++phi) {
@@ -241,11 +277,16 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
 
 
   ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
+  
   // size of the region we search for a local maximum
   int neighbourhood = 10;
+  
   // only search around lines with more that this amount of votes
   // (to be adapted to your image)
   int minVotes = 50;
+  int neighbourhoodLimit = neighbourhood/2+1;
+  int neighbourIdx = 0;
+  
   for (int accR = 0; accR < rDim; accR++) {
     for (int accPhi = 0; accPhi < phiDim; accPhi++) {
       // compute current index in the accumulator
@@ -253,13 +294,13 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
       if (accumulator[idx] > minVotes) {
         boolean bestCandidate=true;
         // iterate over the neighbourhood
-        for (int dPhi=-neighbourhood/2; dPhi < neighbourhood/2+1; dPhi++) {
+        for (int dPhi=-neighbourhood/2; dPhi < neighbourhoodLimit; dPhi++) {
           // check we are not outside the image
           if ( accPhi+dPhi < 0 || accPhi+dPhi >= phiDim) continue;
-          for (int dR=-neighbourhood/2; dR < neighbourhood/2 +1; dR++) {
+          for (int dR=-neighbourhood/2; dR < neighbourhoodLimit; dR++) {
             // check we are not outside the image
             if (accR+dR < 0 || accR+dR >= rDim) continue;
-            int neighbourIdx = (accPhi + dPhi + 1) * (rDim + 2) + accR + dR + 1;
+            neighbourIdx = (accPhi + dPhi + 1) * (rDim + 2) + accR + dR + 1;
             if (accumulator[idx] < accumulator[neighbourIdx]) {
               // the current idx is not a local maximum!
               bestCandidate=false;
@@ -279,8 +320,8 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   Collections.sort(bestCandidates, new HoughComparator(accumulator));
   ArrayList<PVector> lines = new ArrayList<PVector>();
 
-
-  for (int i = 0; i < min(nLines, bestCandidates.size()); i++) {
+  int nBestLimit =  min(nLines, bestCandidates.size());
+  for (int i = 0; i < nBestLimit; i++) {
     int idx = bestCandidates.get(i);
     // first, compute back the (r, phi) polar coordinates:
     int accPhi = (int) (idx / (rDim + 2)) - 1;
@@ -324,7 +365,8 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   }
 
   PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
-  for (int i = 0; i < accumulator.length; i++) {
+  int accLimit = accumulator.length;
+  for (int i = 0; i < accLimit; i++) {
     houghImg.pixels[i] = color(min(255, accumulator[i]));
   }
   // You may want to resize the accumulator to make it easier to see:
