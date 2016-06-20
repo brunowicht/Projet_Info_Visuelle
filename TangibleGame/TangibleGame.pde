@@ -84,9 +84,9 @@ void draw() {
 
   drawBG();
   img = movie.get();
-  img.loadPixels();
   
-  image(img, 0, 0);
+  img.loadPixels();
+  img.resize(imgwidth, imgheight);
 
   colorFilters(img, 85, 125, 35, 210, 75, 255);
 
@@ -95,27 +95,26 @@ void draw() {
   binaryFilter(img, 35);
   sobel(img);
 
- 
+
 
   ArrayList<PVector> lines = hough(img, numLines);
+  
+  image(img, 0, 0);
+
   getIntersections(lines);
 
 
   QuadGraph quadgraph = new QuadGraph();
-  quadgraph.build(lines, width/3, height);
+  quadgraph.build(lines, img.width, img.height);
   quadgraph.findCycles();
   List<int[]>quads  = quadgraph.cycles;
 
-
-
-  for (int[] quad : quads) {
-    PVector l1 = lines.get(quad[0]);
-    PVector l2 = lines.get(quad[1]);
-    PVector l3 = lines.get(quad[2]);
-    PVector l4 = lines.get(quad[3]);
-    // (intersection() is a simplified version of the
-    // intersections() method you wrote last week, that simply
-    // return the coordinates of the intersection between 2 lines)
+  TwoDThreeD projection = new TwoDThreeD(img.width, img.height);
+  if (quads.size() >= 1) {
+    PVector l1 = lines.get(quads.get(0)[0]);
+    PVector l2 = lines.get(quads.get(0)[1]);
+    PVector l3 = lines.get(quads.get(0)[2]);
+    PVector l4 = lines.get(quads.get(0)[3]);
     List<PVector> points = new ArrayList<PVector>();
     points.add(intersection(l1, l2));
     points.add(intersection(l2, l3));
@@ -123,13 +122,16 @@ void draw() {
     points.add(intersection(l4, l1));
     sortCorners(points);
 
-    // Choose a random, semi-transparent colour
-    Random random = new Random();
-    fill(color(min(255, random.nextInt(300)), 
-      min(255, random.nextInt(300)), 
-      min(255, random.nextInt(300)), 50));
-    quad(points.get(0).x, points.get(0).y, points.get(1).x, points.get(1).y, points.get(2).x, points.get(2).y, points.get(3).x, points.get(3).y);
+    PVector rotation = projection.get3DRotations(sortCorners(points));
+    box.rx = min(max(angle_min, rotation.x), angle_max);
+    box.rz = min(max(angle_min, rotation.z), angle_max);
+   
   }
+
+
+
+
+
   image(bg, 0, height * 3/4);
 
   drawTopView();
@@ -147,7 +149,7 @@ void draw() {
   if (! shiftMode) {
     ++time;
     scoreRegister();
-    text("Rotation X: "+radToDeg(box.rx)+"\nRotation Z: "+radToDeg(box.rz)+"\nspeed: "+speed, 0, 0);
+    text("Rotation X: "+radToDeg(box.rx)+"\nRotation Z: "+radToDeg(box.rz)+"\nspeed: "+speed, width/2, 15);
     directionalLight(255, 220, 20, 0, 1, 0);
     ambientLight(120, 120, 120);
     fill(150);

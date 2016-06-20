@@ -1,4 +1,88 @@
 
+/*void settings() {
+  size(960, 240);
+}
+
+
+void setup() {
+  if (camera) {
+    String[] cameras = Capture.list();
+    if (cameras.length == 0) {
+      println("There are no cameras available for capture.");
+      exit();
+    } else {
+      println("Available cameras:");
+      int camL = cameras.length;
+      for (int i = 0; i < camL; i++) {
+        println(cameras[i]);
+      }
+      cam = new Capture(this, cameras[5]);
+      cam.start();
+    }
+  } else {
+    noLoop();
+  }
+}
+void draw() {
+  if (camera) {
+    if (cam.available() == true) {
+      cam.read();
+    }
+    img = cam.get();
+  } else {
+    img = loadImage(imageName);
+    img.resize(width/3, height);
+  }
+
+
+
+
+  PImage hueThresh = huethresh(img);
+  PImage convolute = convolute(convolute(hueThresh));
+  PImage brightThresh = intensitythresh(convolute, bThresh);
+
+
+  PImage sobel = sobel(brightThresh);
+  image(sobel, 0, 0);
+
+
+  ArrayList<PVector> lines = hough(sobel, numLines);
+  getIntersections(lines);
+  image(img, 2* width/3, 0);
+
+  QuadGraph quadgraph = new QuadGraph();
+  quadgraph.build(lines, width/3, height);
+  quadgraph.findCycles();
+  //quadgraph.filter(1000,20);
+  List<int[]>quads  = quadgraph.cycles;
+
+
+
+  for (int[] quad : quads) {
+    PVector l1 = lines.get(quad[0]);
+    PVector l2 = lines.get(quad[1]);
+    PVector l3 = lines.get(quad[2]);
+    PVector l4 = lines.get(quad[3]);
+    // (intersection() is a simplified version of the
+    // intersections() method you wrote last week, that simply
+    // return the coordinates of the intersection between 2 lines)
+    List<PVector> points = new ArrayList<PVector>();
+    points.add(intersection(l1, l2));
+    points.add(intersection(l2, l3));
+    points.add(intersection(l3, l4));
+    points.add(intersection(l4, l1));
+    sortCorners(points);
+
+    // Choose a random, semi-transparent colour
+    Random random = new Random();
+    fill(color(min(255, random.nextInt(300)), 
+      min(255, random.nextInt(300)), 
+      min(255, random.nextInt(300)), 50));
+    quad(points.get(0).x, points.get(0).y, points.get(1).x, points.get(1).y, points.get(2).x, points.get(2).y, points.get(3).x, points.get(3).y);
+  }
+}*/
+
+
 PVector intersection(PVector line1, PVector line2) {
   float d = cos(line2.y)*sin(line1.y) - cos(line1.y)*sin(line2.y);
   int x = (int) ((line2.x * sin(line1.y) - line1.x * sin(line2.y))/d);
