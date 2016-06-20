@@ -3,8 +3,12 @@ class QuadGraph {
 
   List<int[]> cycles = new ArrayList<int[]>();
   int[][] graph;
+  List<PVector> line = new ArrayList<PVector>();
 
   void build(List<PVector> lines, int width, int height) {
+    for (PVector l : lines) {
+      line.add(l);
+    }
 
     int linesSize = lines.size();
 
@@ -12,14 +16,13 @@ class QuadGraph {
     graph = new int[linesSize * (linesSize - 1)/2][2];
 
     int idx =0;
-    
+
     for (int i = 0; i < linesSize; i++) {
       for (int j = i + 1; j < linesSize; j++) {
         if (intersect(lines.get(i), lines.get(j), width, height)) {
 
-          // TODO
-          // fill the graph using intersect() to check if two lines are
-          // connected in the graph.
+          graph[idx][0] = i;
+          graph[idx][1] = j; 
 
           idx++;
         }
@@ -63,10 +66,14 @@ class QuadGraph {
     for (int[] cy : cycles) {
       String s = "" + cy[0];
       int  cyL = cy.length;
-      for (int i = 1; i < cyL; i++) {
-        s += "," + cy[i];
+      if (cyL == 4) {
+        for (int i = 1; i < cyL; i++) {
+          s += "," + cy[i];
+        }
+        System.out.println(s);
+      } else {
+        cycles.remove(cy);
       }
-      System.out.println(s);
     }
     return cycles;
   }
@@ -102,6 +109,23 @@ class QuadGraph {
             }
           }
         }
+  }
+
+  void filter(float max, float min) {
+    List<int[]> newcycles = new ArrayList<int[]>();
+    for (int[] quad : cycles) {
+      PVector l1 = line.get(quad[0]);
+      PVector l2 = line.get(quad[1]);
+      PVector l3 = line.get(quad[2]);
+      PVector l4 = line.get(quad[3]);
+      if (validArea(l1, l2, l3, l4, max, min)) {
+        newcycles.add(quad);
+      }
+    }
+    cycles.clear();
+    for(int[] cy: newcycles){
+      cycles.add(cy);
+    }
   }
 
   //  check of both arrays have same lengths and contents
@@ -259,7 +283,7 @@ class QuadGraph {
 
     boolean valid = (area < max_area && area > min_area);
 
-    if (!valid) System.out.println("Area out of range");
+    if (!valid) System.out.println("Area out of range "+area);
 
     return valid;
   }
@@ -270,7 +294,7 @@ class QuadGraph {
   boolean nonFlatQuad(PVector c1, PVector c2, PVector c3, PVector c4) {
 
     // cos(70deg) ~= 0.3
-    float min_cos = 0.5f;
+    float min_cos =1.0f;
 
     PVector v21= PVector.sub(c1, c2);
     PVector v32= PVector.sub(c2, c3);
@@ -285,7 +309,7 @@ class QuadGraph {
     if (cos1 < min_cos && cos2 < min_cos && cos3 < min_cos && cos4 < min_cos)
       return true;
     else {
-      System.out.println("Flat quad");
+      System.out.println("Flat quad"+cos4);
       return false;
     }
   }

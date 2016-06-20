@@ -1,8 +1,12 @@
+import papaya.*;
 import processing.video.*;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Random;
+
+
 Capture cam;
 
 PImage img;
@@ -14,7 +18,7 @@ int bThresh = 150;
 int numLines = 4;
 
 boolean camera =false;
-String imageName = "board1.jpg";
+String imageName = "board3.jpg";
 
 void settings() {
   size(960, 240);
@@ -60,12 +64,52 @@ void draw() {
 
 
   PImage sobel = sobel(brightThresh);
-  image(img, 0, 0);
+  image(sobel, 0, 0);
+
 
   ArrayList<PVector> lines = hough(sobel, numLines);
   getIntersections(lines);
+  image(img, 2* width/3, 0);
 
-  image(sobel, 2* width/3, 0);
+  QuadGraph quadgraph = new QuadGraph();
+  quadgraph.build(lines, width/3, height);
+  quadgraph.findCycles();
+  //quadgraph.filter(1000,20);
+  List<int[]>quads  = quadgraph.cycles;
+
+
+
+  for (int[] quad : quads) {
+    PVector l1 = lines.get(quad[0]);
+    PVector l2 = lines.get(quad[1]);
+    PVector l3 = lines.get(quad[2]);
+    PVector l4 = lines.get(quad[3]);
+    // (intersection() is a simplified version of the
+    // intersections() method you wrote last week, that simply
+    // return the coordinates of the intersection between 2 lines)
+    List<PVector> points = new ArrayList<PVector>();
+    points.add(intersection(l1, l2));
+    points.add(intersection(l2, l3));
+    points.add(intersection(l3, l4));
+    points.add(intersection(l4, l1));
+    sortCorners(points);
+
+    // Choose a random, semi-transparent colour
+    Random random = new Random();
+    fill(color(min(255, random.nextInt(300)), 
+      min(255, random.nextInt(300)), 
+      min(255, random.nextInt(300)), 50));
+    quad(points.get(0).x, points.get(0).y, points.get(1).x, points.get(1).y, points.get(2).x, points.get(2).y, points.get(3).x, points.get(3).y);
+  }
+}
+
+
+PVector intersection(PVector line1, PVector line2) {
+  float d = cos(line2.y)*sin(line1.y) - cos(line1.y)*sin(line2.y);
+  int x = (int) ((line2.x * sin(line1.y) - line1.x * sin(line2.y))/d);
+  int y = (int) ((line1.x * cos(line2.y) - line2.x * cos(line1.y))/d);
+
+  return new PVector(x, y);
 }
 
 ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
@@ -81,6 +125,7 @@ ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
       float d = cos(line2.y)*sin(line1.y) - cos(line1.y)*sin(line2.y);
       int x = (int) ((line2.x * sin(line1.y) - line1.x * sin(line2.y))/d);
       int y = (int) ((line1.x * cos(line2.y) - line2.x * cos(line1.y))/d);
+      intersections.add(new PVector(x, y));
       fill(255, 128, 0);
       if (x < img.width && x > 0 && y < img.height && y > 0) {
         ellipse(x, y, 10, 10);
