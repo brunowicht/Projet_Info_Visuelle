@@ -63,18 +63,6 @@ class QuadGraph {
         findNewCycles(new int[] {graph[i][j]});
       }
     }
-    for (int[] cy : cycles) {
-      String s = "" + cy[0];
-      int  cyL = cy.length;
-      if (cyL == 4) {
-        for (int i = 1; i < cyL; i++) {
-          s += "," + cy[i];
-        }
-        System.out.println(s);
-      } else {
-        cycles.remove(cy);
-      }
-    }
     return cycles;
   }
 
@@ -123,7 +111,7 @@ class QuadGraph {
       }
     }
     cycles.clear();
-    for(int[] cy: newcycles){
+    for (int[] cy : newcycles) {
       cycles.add(cy);
     }
   }
@@ -309,7 +297,7 @@ class QuadGraph {
     if (cos1 < min_cos && cos2 < min_cos && cos3 < min_cos && cos4 < min_cos)
       return true;
     else {
-      System.out.println("Flat quad"+cos4);
+
       return false;
     }
   }

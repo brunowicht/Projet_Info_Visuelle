@@ -115,6 +115,7 @@ ArrayList<PVector> getIntersections(ArrayList<PVector> lines) {
 }
 
 void colorFilters(PImage img, int hueMin, int hueMax, int brightnessMin, int brightnessMax, int saturationMin, int saturationMax) {
+  
   for (int i = 0; i != img.pixels.length; ++i) {
     int pixel = img.pixels[i];
 

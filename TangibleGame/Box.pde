@@ -22,12 +22,7 @@ class Box {
   }
 
   void boxRotation() {
-    if (mousePressed == true && mouseY <= height * 3/4) {
-      rx = rx + speed*(map(pmouseY - mouseY, 0, width, 0, 2*PI));
-      rz = rz - speed*(map(pmouseX - mouseX, 0, height, 0, 2*PI));
-    }
-    rx = min(max(angle_min, rx), angle_max);
-    rz = min(max(angle_min, rz), angle_max);
+    
     rotateZ(rz);
     rotateX(rx);
   }

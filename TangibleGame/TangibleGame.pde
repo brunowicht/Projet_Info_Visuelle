@@ -87,6 +87,13 @@ void draw() {
   
   img.loadPixels();
   img.resize(imgwidth, imgheight);
+  
+  
+  PImage image = createImage(img.width, img.height, RGB);
+  for(int i = 0; i < img.width * img.height; ++i){
+    image.pixels[i] = img.pixels[i];
+  }
+  image(image, 0, 0);
 
   colorFilters(img, 85, 125, 35, 210, 75, 255);
 
@@ -99,7 +106,7 @@ void draw() {
 
   ArrayList<PVector> lines = hough(img, numLines);
   
-  image(img, 0, 0);
+  
 
   getIntersections(lines);
 
